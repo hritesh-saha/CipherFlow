@@ -1,0 +1,25 @@
+### 1. Test Valid Ingestion Payload
+POST http://localhost:8000/audit/events
+Content-Type: application/json
+
+{
+  "event_id": "evt_98765",
+  "source": "payment-gateway",
+  "timestamp": "2026-08-08T17:00:00Z",
+  "encrypted_payload": "U2FsdGVkX1+xyz123abc=="
+}
+
+### 2. Test Invalid Payload (Triggers Zod 400 Bad Request)
+POST http://localhost:8000/audit/events
+Content-Type: application/json
+
+{
+  "event_id": "evt_98765",
+  "source": "payment-gateway"
+}
+
+### 3. Check K8s Readiness Probe
+GET http://localhost:8000/health/ready
+
+### 4. Check K8s Liveness Probe
+GET http://localhost:8000/health/live
