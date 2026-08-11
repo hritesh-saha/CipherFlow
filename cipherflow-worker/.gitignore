@@ -1,0 +1,33 @@
+# Node Modules
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# TypeScript Compilation Output
+dist/
+build/
+out/
+
+# Environment Variables & Secrets (CRITICAL FOR DEVSECOPS)
+.env
+.env.*
+!.env.example
+
+# Logs
+logs/
+*.log
+
+# Coverage / Testing
+coverage/
+.nyc_output/
+
+# Editor / OS Files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# VS Code REST Client Variables (prevents leaking local test tokens)
+.rest-client-env.json
