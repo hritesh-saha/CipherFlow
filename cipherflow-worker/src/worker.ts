@@ -1,29 +1,22 @@
-import dotenv from 'dotenv';
-dotenv.config();
 import { Redis } from 'ioredis';
 import crypto from 'crypto';
+import dotenv from 'dotenv';
+import { pool, initializeDB } from './db.js'; 
 
-// 1. Environment & Configuration
+dotenv.config();
+
 const REDIS_HOST = process.env.REDIS_HOST || 'localhost';
 const REDIS_PORT = parseInt(process.env.REDIS_PORT || '6379', 10);
 const STREAM_NAME = 'audit_events_stream';
 const GROUP_NAME = 'cipherflow_workers';
 const CONSUMER_NAME = `worker-${process.pid}`; 
 
-// Convert the string from the .env file into a Buffer
-const SECRET_KEY = Buffer.from(process.env.ENCRYPTION_KEY || '', 'utf8');
-
-if (SECRET_KEY.length !== 32) {
-  console.error('CRITICAL: ENCRYPTION_KEY must be exactly 32 characters long.');
-  process.exit(1);
-}
+const SECRET_KEY = Buffer.from(process.env.ENCRYPTION_KEY || '', 'utf8'); 
 
 const redis = new Redis({ host: REDIS_HOST, port: REDIS_PORT });
 
-// 2. Cryptographic Engine
 function decryptPayload(encryptedHex: string): string {
   try {
-    // Strictly destructure to ensure TS knows these are strings, not undefined
     const [ivHex, encryptedTextHex, authTagHex] = encryptedHex.split(':');
     
     if (!ivHex || !encryptedTextHex || !authTagHex) {
@@ -46,7 +39,6 @@ function decryptPayload(encryptedHex: string): string {
   }
 }
 
-// 3. Redis Consumer Group Initialization
 async function initializeGroup() {
   try {
     await redis.xgroup('CREATE', STREAM_NAME, GROUP_NAME, '0', 'MKSTREAM');
@@ -59,7 +51,6 @@ async function initializeGroup() {
   }
 }
 
-// 4. The Main Event Loop
 async function processEvents() {
   console.log(`🎧 [${CONSUMER_NAME}] Listening for encrypted events...`);
 
@@ -72,7 +63,6 @@ async function processEvents() {
         'STREAMS', STREAM_NAME, '>'
       );
 
-      // Strict null checks to satisfy TypeScript
       if (response && response.length > 0) {
         const stream = response[0];
         if (!stream) continue;
@@ -84,41 +74,45 @@ async function processEvents() {
           const messageId = message[0];
           const fields = message[1]; 
           
-          // fields is a flat array: ['data', '{"event_id":...}']
-          if (!fields || fields.length < 2 || !fields[1]) {
-            console.warn('⚠️ Received malformed message fields, skipping.');
-            continue;
-          }
+          if (!fields || fields.length < 2 || !fields[1]) continue;
 
           const rawData = JSON.parse(fields[1]); 
-          
-          console.log(`\n📦 Received Event: ${rawData.event_id}`);
-          console.log(`🔒 Encrypted Payload: ${rawData.encrypted_payload}`);
+          console.log(`\n📦 Processing Event: ${rawData.event_id}`);
 
           const plainText = decryptPayload(rawData.encrypted_payload);
-          console.log(`🔓 Decrypted Payload: ${plainText}`);
 
-          // TODO: Day 3 - Insert into PostgreSQL here
+          // Using the imported pool
+          const insertQuery = `
+            INSERT INTO audit_logs (event_id, source, event_timestamp, decrypted_payload)
+            VALUES ($1, $2, $3, $4)
+            ON CONFLICT (event_id) DO NOTHING;
+          `;
+          const values = [rawData.event_id, rawData.source, rawData.timestamp, plainText];
+          
+          await pool.query(insertQuery, values);
+          console.log(`💾 Saved to Database: ${rawData.event_id}`);
 
           await redis.xack(STREAM_NAME, GROUP_NAME, messageId);
           console.log(`✅ Acknowledged Message ID: ${messageId}`);
         }
       }
     } catch (err) {
-      console.error('Error processing stream:', err);
+      console.error('Error processing stream or database:', err);
     }
   }
 }
 
 async function start() {
+  await initializeDB();
   await initializeGroup();
   await processEvents();
 }
 
 start();
 
-process.on('SIGINT', () => {
+process.on('SIGINT', async () => {
   console.log('\nGracefully shutting down worker...');
+  await pool.end();
   redis.quit();
   process.exit(0);
 });

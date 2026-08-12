@@ -29,7 +29,7 @@ POST http://localhost:8000/audit/events
 Content-Type: application/json
 
 {
-  "event_id": "evt_00001",
+  "event_id": "evt_00002",
   "source": "auth-service",
   "timestamp": "2026-08-11T18:32:00Z",
   "encrypted_payload": "6717d48028bbc592beeed002:e9a5af7227a141ff310061d8ec83312ad5f2207bb54ace79f6ba51:ccad86df0191883af64c8fbabd930273"
