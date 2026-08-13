@@ -31,3 +31,5 @@ Thumbs.db
 
 # VS Code REST Client Variables (prevents leaking local test tokens)
 .rest-client-env.json
+
+*.txt
