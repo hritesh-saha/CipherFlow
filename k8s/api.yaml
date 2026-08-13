@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cipherflow-api
+  labels:
+    app: cipherflow-api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: cipherflow-api
+  template:
+    metadata:
+      labels:
+        app: cipherflow-api
+    spec:
+      # DEVSECOPS: Enforce non-root execution at the orchestrator level
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000 
+      containers:
+      - name: api
+        image: cipherflow-api:1.0
+        # CRITICAL FOR LOCAL DEV: Tells K8s not to look on Docker Hub
+        imagePullPolicy: Never 
+        ports:
+        - containerPort: 8000
+        env:
+        - name: REDIS_HOST
+          value: "redis-svc" # We will create this Service on Day 6
+        - name: REDIS_PORT
+          value: "6379"
+        livenessProbe:
+          httpGet:
+            path: /health/live
+            port: 8000
+          initialDelaySeconds: 5
+        readinessProbe:
+          httpGet:
+            path: /health/ready
+            port: 8000
+          initialDelaySeconds: 5
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cipherflow-api-svc
+spec:
+  selector:
+    app: cipherflow-api
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8000
+  type: ClusterIP

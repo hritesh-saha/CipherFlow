@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cipherflow-worker
+  labels:
+    app: cipherflow-worker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cipherflow-worker
+  template:
+    metadata:
+      labels:
+        app: cipherflow-worker
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+      containers:
+      - name: worker
+        image: cipherflow-worker:1.0
+        imagePullPolicy: Never
+        # NOTE: Hardcoding secrets here is temporary. 
+        # We will lock this down with K8s Secrets on Day 8.
+        env:
+        - name: REDIS_HOST
+          value: "redis-svc"
+        - name: ENCRYPTION_KEY
+          value: "12345678901234567890123456789012"
+        - name: DB_USER
+          value: "admin"
+        - name: DB_PASSWORD
+          value: "supersecret"
+        - name: DB_HOST
+          value: "postgres-svc" # We will create this on Day 6
+        - name: DB_NAME
+          value: "cipherflow"
