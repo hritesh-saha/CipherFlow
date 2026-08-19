@@ -21,12 +21,18 @@ spec:
         ports:
         - containerPort: 5432
         env:
-        - name: POSTGRES_USER
-          value: "admin"
-        - name: POSTGRES_PASSWORD
-          value: "supersecret"
         - name: POSTGRES_DB
-          value: "cipherflow"
+          value: "cipherflow" # The DB name is public/config, not a secret
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: cipherflow-secrets
+              key: db-user
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: cipherflow-secrets
+              key: db-password
 ---
 apiVersion: v1
 kind: Service

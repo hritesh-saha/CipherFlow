@@ -26,13 +26,22 @@ spec:
         env:
         - name: REDIS_HOST
           value: "redis-svc"
-        - name: ENCRYPTION_KEY
-          value: "12345678901234567890123456789012"
-        - name: DB_USER
-          value: "admin"
-        - name: DB_PASSWORD
-          value: "supersecret"
         - name: DB_HOST
-          value: "postgres-svc" # We will create this on Day 6
+          value: "postgres-svc"
         - name: DB_NAME
           value: "cipherflow"
+        - name: ENCRYPTION_KEY
+          valueFrom:
+            secretKeyRef:
+              name: cipherflow-secrets
+              key: encryption-key
+        - name: DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: cipherflow-secrets
+              key: db-user
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: cipherflow-secrets
+              key: db-password
