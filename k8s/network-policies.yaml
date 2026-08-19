@@ -1,0 +1,45 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: isolate-postgres
+spec:
+  # 1. Target the Postgres pods
+  podSelector:
+    matchLabels:
+      app: postgres
+  policyTypes:
+  - Ingress
+  ingress:
+  # 2. ONLY allow traffic from the worker pod
+  - from:
+    - podSelector:
+        matchLabels:
+          app: cipherflow-worker
+    ports:
+    - protocol: TCP
+      port: 5432
+
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: isolate-redis
+spec:
+  podSelector:
+    matchLabels:
+      app: redis
+  policyTypes:
+  - Ingress
+  ingress:
+  # Redis needs to accept traffic from BOTH the API (to queue events) 
+  # and the Worker (to read events)
+  - from:
+    - podSelector:
+        matchLabels:
+          app: cipherflow-api
+    - podSelector:
+        matchLabels:
+          app: cipherflow-worker
+    ports:
+    - protocol: TCP
+      port: 6379
