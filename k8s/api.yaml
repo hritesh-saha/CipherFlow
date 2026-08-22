@@ -22,7 +22,15 @@ spec:
       - name: api
         image: cipherflow-api:1.0
         # CRITICAL FOR LOCAL DEV: Tells K8s not to look on Docker Hub
-        imagePullPolicy: Never 
+        imagePullPolicy: Never
+        # DEVSECOPS: Prevent resource exhaustion DoS attacks
+        resources:
+          requests:
+            cpu: "100m"     # 100 millicores (10% of 1 CPU core)
+            memory: "128Mi" # 128 Megabytes
+          limits:
+            cpu: "250m"     # Hard cap at 25% of a core
+            memory: "256Mi" # Hard cap at 256 Megabytes 
         ports:
         - containerPort: 8000
         env:

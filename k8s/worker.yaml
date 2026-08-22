@@ -21,8 +21,13 @@ spec:
       - name: worker
         image: cipherflow-worker:1.0
         imagePullPolicy: Never
-        # NOTE: Hardcoding secrets here is temporary. 
-        # We will lock this down with K8s Secrets on Day 8.
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "128Mi"
+          limits:
+            cpu: "500m"     # Workers do cryptography, so we give them a slightly higher CPU cap
+            memory: "256Mi"
         env:
         - name: REDIS_HOST
           value: "redis-svc"
