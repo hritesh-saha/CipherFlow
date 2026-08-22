@@ -1,0 +1,18 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: cipherflow-ingress
+  annotations:
+    # Optional DevSecOps rule: Drops HTTP requests trying to use oversized headers
+    nginx.ingress.kubernetes.io/client-header-buffer-size: "1k"
+spec:
+  rules:
+  - http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: cipherflow-api-svc
+            port:
+              number: 80
