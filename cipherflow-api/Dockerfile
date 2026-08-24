@@ -18,8 +18,9 @@ FROM node:20-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 
-# DEVSECOPS FIX: Patch underlying OS vulnerabilities (CVEs) dynamically
-RUN apk update && apk upgrade --no-cache
+# DEVSECOPS FIX: Patch underlying OS vulnerabilities AND upgrade global npm
+RUN apk update && apk upgrade --no-cache && \
+    npm install -g npm@10
 
 # DevSecOps Best Practice: Never run as root. 
 # We use the built-in 'node' user provided by the alpine image.
