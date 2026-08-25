@@ -14,10 +14,11 @@ spec:
       labels:
         app: cipherflow-api
     spec:
-      # DEVSECOPS: Enforce non-root execution at the orchestrator level
+      # DEVSECOPS FIX: Attach the restricted ServiceAccount
+      serviceAccountName: cipherflow-sa
       securityContext:
         runAsNonRoot: true
-        runAsUser: 1000 
+        runAsUser: 1000
       containers:
       - name: api
         image: cipherflow-api:1.0

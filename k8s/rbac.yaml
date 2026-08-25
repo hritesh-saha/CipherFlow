@@ -1,0 +1,34 @@
+# 1. The Identity
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: cipherflow-sa
+  namespace: default
+
+---
+# 2. The Permissions
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: cipherflow-endpoint-reader
+  namespace: default
+rules:
+- apiGroups: [""]
+  resources: ["endpoints"]
+  verbs: ["get", "list"]
+
+---
+# 3. The Bridge
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: cipherflow-role-binding
+  namespace: default
+subjects:
+- kind: ServiceAccount
+  name: cipherflow-sa
+  namespace: default
+roleRef:
+  kind: Role
+  name: cipherflow-endpoint-reader
+  apiGroup: rbac.authorization.k8s.io
