@@ -17,6 +17,12 @@
     "ioredis": "^6.0.0",
     "pg": "^8.23.0"
   },
+  "overrides": {
+    "brace-expansion": "^5.0.7",
+    "ip-address": "^10.3.1",
+    "picomatch": "^4.0.4",
+    "sigstore": "^4.1.1"
+  },
   "devDependencies": {
     "@types/node": "^26.2.0",
     "@types/pg": "^8.21.0",
