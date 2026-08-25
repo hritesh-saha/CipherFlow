@@ -1,0 +1,10 @@
+# Accepted Risks - 2026-08-25
+# These are deep transitive dependencies inside Fastify/Zod. 
+# NPM refuses to override due to major version conflicts. 
+# No direct exploit path exists via external API inputs.
+CVE-2026-13149
+CVE-2026-14257
+CVE-2026-69152
+CVE-2026-69192
+CVE-2026-33671
+CVE-2026-48815
