@@ -55,6 +55,8 @@ apiVersion: v1
 kind: Service
 metadata:
   name: cipherflow-api-svc
+  labels:                 
+    app: cipherflow-api   
 spec:
   selector:
     app: cipherflow-api
