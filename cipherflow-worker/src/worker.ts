@@ -2,8 +2,17 @@ import { Redis } from 'ioredis';
 import crypto from 'crypto';
 import dotenv from 'dotenv';
 import { pool, initializeDB } from './db.js'; 
+import http from 'http';
+import client from 'prom-client';
 
 dotenv.config();
+
+// Initialize Metrics
+client.collectDefaultMetrics();
+const eventsProcessedCounter = new client.Counter({
+  name: 'worker_events_processed_total',
+  help: 'Total number of events processed by the worker'
+});
 
 const REDIS_HOST = process.env.REDIS_HOST || 'localhost';
 const REDIS_PORT = parseInt(process.env.REDIS_PORT || '6379', 10);
@@ -94,6 +103,9 @@ async function processEvents() {
 
           await redis.xack(STREAM_NAME, GROUP_NAME, messageId);
           console.log(`✅ Acknowledged Message ID: ${messageId}`);
+
+          // Increment the counter after successful processing!
+          eventsProcessedCounter.inc();
         }
       }
     } catch (err) {
@@ -102,9 +114,26 @@ async function processEvents() {
   }
 }
 
+// Create a tiny HTTP server just for metrics
+const metricsServer = http.createServer(async (req, res) => {
+  if (req.url === '/metrics') {
+    res.setHeader('Content-Type', client.register.contentType);
+    res.end(await client.register.metrics());
+  } else {
+    res.writeHead(404);
+    res.end();
+  }
+});
+
 async function start() {
   await initializeDB();
   await initializeGroup();
+
+  // Start listening for Prometheus on port 8000
+  metricsServer.listen(8000, () => {
+    console.log('📊 Worker metrics server listening on port 8000');
+  });
+
   await processEvents();
 }
 
@@ -112,6 +141,7 @@ start();
 
 process.on('SIGINT', async () => {
   console.log('\nGracefully shutting down worker...');
+  metricsServer.close(); // Stop the metrics server
   await pool.end();
   redis.quit();
   process.exit(0);

@@ -1,0 +1,18 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: cipherflow-monitor
+  namespace: default
+  labels:
+    # CRITICAL: Tells Prometheus to adopt this configuration
+    release: observability 
+spec:
+  selector:
+    matchExpressions:
+      - key: app
+        operator: In
+        values: [cipherflow-api, cipherflow-worker]
+  endpoints:
+  - port: http
+    path: /metrics
+    interval: 15s

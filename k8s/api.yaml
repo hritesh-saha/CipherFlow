@@ -21,7 +21,7 @@ spec:
         runAsUser: 1000
       containers:
       - name: api
-        image: cipherflow-api:1.0
+        image: cipherflow-api:1.1
         # CRITICAL FOR LOCAL DEV: Tells K8s not to look on Docker Hub
         imagePullPolicy: Never
         # DEVSECOPS: Prevent resource exhaustion DoS attacks
@@ -36,7 +36,7 @@ spec:
         - containerPort: 8000
         env:
         - name: REDIS_HOST
-          value: "redis-svc" # We will create this Service on Day 6
+          value: "redis-svc" 
         - name: REDIS_PORT
           value: "6379"
         livenessProbe:
@@ -59,7 +59,8 @@ spec:
   selector:
     app: cipherflow-api
   ports:
-    - protocol: TCP
+    - name: http
+      protocol: TCP
       port: 80
       targetPort: 8000
   type: ClusterIP

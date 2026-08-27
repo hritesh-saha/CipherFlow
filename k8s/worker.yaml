@@ -21,7 +21,7 @@ spec:
         runAsUser: 1000
       containers:
       - name: worker
-        image: cipherflow-worker:1.0
+        image: cipherflow-worker:1.1
         imagePullPolicy: Never
         resources:
           requests:
@@ -52,3 +52,18 @@ spec:
             secretKeyRef:
               name: cipherflow-secrets
               key: db-password
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cipherflow-worker-svc
+spec:
+  selector:
+    app: cipherflow-worker
+  ports:
+    - name: http       # <--- REQUIRED FOR PROMETHEUS
+      protocol: TCP
+      port: 80
+      targetPort: 8000
+  type: ClusterIP

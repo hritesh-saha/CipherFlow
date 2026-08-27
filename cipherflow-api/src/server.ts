@@ -2,11 +2,20 @@ import fastify from "fastify";
 import type { FastifyInstance } from "fastify";
 import { z } from 'zod';
 import { Redis } from 'ioredis';
+import client from 'prom-client';
 
 // 1. Environment Configuration
 const REDIS_HOST = process.env.REDIS_HOST || 'localhost';
 const REDIS_PORT = parseInt(process.env.REDIS_PORT || '6379', 10);
 const REDIS_STREAM_NAME = 'audit_events_stream';
+
+// Initialize Metrics
+client.collectDefaultMetrics();
+const requestCounter = new client.Counter({
+  name: 'http_requests_total',
+  help: 'Total number of HTTP requests',
+  labelNames: ['method', 'status']
+});
 
 // 2. Strict Zod Schema for Validation
 const AuditEventSchema = z.object({
@@ -19,8 +28,22 @@ const AuditEventSchema = z.object({
 // Infer TypeScript type directly from Schema
 type AuditEvent = z.infer<typeof AuditEventSchema>;
 
-// Initialize Fastify and Redis
+// Initialize Fastify
 const app: FastifyInstance = fastify({ logger: true });
+
+// Count every HTTP request automatically
+app.addHook('onResponse', (request, reply, done) => {
+  requestCounter.labels(request.method, reply.statusCode.toString()).inc();
+  done();
+});
+
+// Expose the metrics to Prometheus
+app.get('/metrics', async (request, reply) => {
+  reply.header('Content-Type', client.register.contentType);
+  return await client.register.metrics();
+});
+
+// Initialize Redis
 const redisClient = new Redis({
   host: REDIS_HOST,
   port: REDIS_PORT,
