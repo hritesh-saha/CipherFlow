@@ -17,12 +17,13 @@ FROM node:20-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 
-# DEVSECOPS FIX: Delete npm entirely. 
-# We only need the 'node' binary to run our compiled app.
-# By deleting npm, we eliminate the entire attack surface and Trivy CVEs.
-RUN rm -rf /usr/local/lib/node_modules/npm \
-    && rm -f /usr/local/bin/npm \
-    && rm -f /usr/local/bin/npx
+# DEVSECOPS FIX: Explicitly patch OpenSSL OS vulnerabilities, 
+# then upgrade the rest of the OS, and finally delete npm to reduce attack surface.
+RUN apk add --upgrade --no-cache libcrypto3 libssl3 && \
+    apk upgrade --no-cache && \
+    rm -rf /usr/local/lib/node_modules/npm && \
+    rm -f /usr/local/bin/npm && \
+    rm -f /usr/local/bin/npx
 
 USER node
 
