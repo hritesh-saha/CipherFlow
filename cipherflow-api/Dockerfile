@@ -18,9 +18,12 @@ FROM node:20-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 
-# DEVSECOPS FIX: Patch underlying OS vulnerabilities AND upgrade global npm
-RUN apk update && apk upgrade --no-cache && \
-    npm install -g npm@10
+# DEVSECOPS FIX: Delete npm entirely. 
+# We only need the 'node' binary to run our compiled app.
+# By deleting npm, we eliminate the entire attack surface and Trivy CVEs.
+RUN rm -rf /usr/local/lib/node_modules/npm \
+    && rm -f /usr/local/bin/npm \
+    && rm -f /usr/local/bin/npx
 
 # DevSecOps Best Practice: Never run as root. 
 # We use the built-in 'node' user provided by the alpine image.
